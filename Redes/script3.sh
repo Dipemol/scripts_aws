@@ -8,11 +8,17 @@ IG_ID=$(aws ec2 create-internet-gateway \
     --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=igw-vpcdiego}]' \
     --query InternetGateway.InternetGatewayId --output text)
 
-#Asociamos el Gateway a la VPC https://docs.aws.amazon.com/es_es/ec2/latest/devguide/example_ec2_AttachInternetGateway_section.html
+#Asocio el Gateway a la VPC https://docs.aws.amazon.com/es_es/ec2/latest/devguide/example_ec2_AttachInternetGateway_section.html
 aws ec2 attach-internet-gateway \
     --internet-gateway-id $IG_ID \
     --vpc-id $VPC_ID
 
+#Creo una tabla de enrutamiento https://docs.aws.amazon.com/es_es/ec2/latest/devguide/example_ec2_CreateRouteTable_section.html
+RT_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID \
+    --query RouteTable.RouteTableId --output text)
+
+#Agrego una ruta para la salida de internet https://docs.aws.amazon.com/es_es/ec2/latest/devguide/example_ec2_CreateRoute_section.html
+aws ec2 create-route --route-table-id $RT_ID --destination-cidr-block 0.0.0.0/0 --gateway-id $IG_ID
 
 #muestro la vpcid que he creado
 echo id de la vpc
@@ -36,6 +42,9 @@ echo $SUB_ID
 
 #habilito la asignacion de ipv4 publica en la subred
 aws ec2 modify-subnet-attribute --subnet-id $SUB_ID --map-public-ip-on-launch
+
+#Asociamos la tabla de enrutamiento a una subred https://docs.aws.amazon.com/cli/latest/reference/ec2/associate-route-table.html
+aws ec2 associate-route-table --route-table-id $RT_ID --subnet-id $SUB_ID
 
 #creo grupo de seguridad
 SG_ID=$(aws ec2 create-security-group --vpc-id $VPC_ID \
