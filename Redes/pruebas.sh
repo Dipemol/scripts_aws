@@ -1,6 +1,6 @@
 #creo la vpc y devuelvo su id
 VPC_ID=$(aws ec2 create-vpc --cidr-block 172.16.0.0/16 \
-    --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=vpcdiego}]' \
+    --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=vpcdiego2}]' \
     --query Vpc.VpcId --output text)
 
 #habilitar dns en la vpc
@@ -8,15 +8,13 @@ aws ec2 modify-vpc-attribute \
     --vpc-id $VPC_ID \
     --enable-dns-hostnames "{\"Value\":true}"
 
-#muestro la vpcid que he creado
-echo id de la vpc
 echo $VPC_ID
 
 #Creo el Gateway 
 IG_ID=$(aws ec2 create-internet-gateway \
-    --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=igw-vpcdiego}]' \
+    --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=igw-vpcdiego2}]' \
     --query InternetGateway.InternetGatewayId --output text)
-
+echo $IG_ID
 #Asocio el Gateway a la VPC 
 aws ec2 attach-internet-gateway \
     --internet-gateway-id $IG_ID \
@@ -26,6 +24,8 @@ aws ec2 attach-internet-gateway \
 RT_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID \
     --query RouteTable.RouteTableId --output text)
 
+echo $RT_ID
+
 #Agrego una ruta para la salida de internet 
 aws ec2 create-route --route-table-id $RT_ID --destination-cidr-block 0.0.0.0/0 --gateway-id $IG_ID
 
@@ -33,7 +33,7 @@ aws ec2 create-route --route-table-id $RT_ID --destination-cidr-block 0.0.0.0/0 
 SUB_ID=$(aws ec2 create-subnet \
     --vpc-id $VPC_ID \
     --cidr-block  172.16.0.0/20 \
-    --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=mi-subred1-diego}]' \
+    --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=subred-diego}]' \
     --query Subnet.SubnetId --output text)
 
 #muestra el id de la subnet
@@ -69,5 +69,9 @@ EC2_ID=$(aws ec2 run-instances \
     --subnet-id $SUB_ID \
     --security-group-ids $SG_ID \
     --associate-public-ip-address \
+    --private-ip-address 172.16.0.100 \
     --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=ec2gateway}]' \
-    --query Instances.InstanceId --output text)
+    --query Instances[0].InstanceId --output text)
+
+sleep 15
+echo $EC2_ID
