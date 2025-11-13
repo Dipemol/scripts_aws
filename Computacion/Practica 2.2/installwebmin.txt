@@ -1,0 +1,6 @@
+#!/bin/bash
+curl -o setup-repos.sh https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
+bash setup-repos.sh -f
+apt update
+apt install webmin -y
+/usr/share/webmin/changepass.pl /etc/webmin/ root admin1234
