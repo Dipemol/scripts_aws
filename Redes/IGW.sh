@@ -35,14 +35,18 @@ SUBPR_ID=$(aws ec2 create-subnet \
     --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=EjercicioCliPrivada}]' \
     --query Subnet.SubnetId --output text)
 
-aws ec2 create-nat-gateway --subnet-id $SUBPU_ID --allocation-id 
+ALLO_ID=$(aws ec2 allocate-address --domain vpc --query 'AllocationId' --output text)
+
+NG_ID=$(aws ec2 create-nat-gateway --subnet-id $SUBPU_ID --allocation-id $ALLO_ID --query NatGateway.NatGatewayId --output text)
+
+aws ec2 wait nat-gateway-available --nat-gateway-ids $NG_ID
+
+aws ec2 associate-nat-gateway-address --nat-gateway-id $NG_ID --allocation-ids $ALLO_ID
 
 RTPR_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID \
     --query RouteTable.RouteTableId --output text)
 
-aws ec2 create-route --route-table-id $RTPR_ID --destination-cidr-block 0.0.0.0/0 --gateway-id $IGPR_ID
-
-aws ec2 modify-subnet-attribute --subnet-id $SUBPR_ID --map-public-ip-on-launch
+aws ec2 create-route --route-table-id $RTPR_ID --destination-cidr-block 0.0.0.0/0 --nat-gateway-id $NG_ID
 
 aws ec2 associate-route-table --route-table-id $RTPR_ID --subnet-id $SUBPR_ID
 
@@ -59,7 +63,7 @@ aws ec2 authorize-security-group-ingress \
 aws ec2 authorize-security-group-ingress \
     --group-id $SG_ID \
     --protocol icmp \
-    --port 0-65535 \
+    --port 0 \
     --cidr 0.0.0.0/0
 
 
