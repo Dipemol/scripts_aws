@@ -1,4 +1,4 @@
-# Nombre de la instancia (Reemplaza por tu ID de instancia o nombre)
+# Nombre de la instancia
 EC2_ID="i-0d4c0829fd370e4ab"
 
 # Verificar si la instancia existe
